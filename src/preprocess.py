@@ -132,14 +132,14 @@ class AITAPreprocessor:
         """
         clean_df = self.clean_text(df)
         
-        # 1. Main Text Representation (TF-IDF or Embeddings)
+        # Main Text Representation (TF-IDF or Embeddings)
         text_features = self._extract_text_representation(clean_df['clean_body'], is_train=True)
         
-        # 2. Body Sentiment & Stylometrics
+        # Body Sentiment & Stylometrics
         sentiment_df = self.extract_sentiment(clean_df['clean_body'])
         stylometrics_df = self.extract_stylometrics(clean_df['clean_body'])
         
-        # Combine non-TF-IDF numerical features and scale them
+        # Combine non-TF-IDF and numerical features and scale them
         numeric_features = pd.concat([sentiment_df, stylometrics_df], axis=1)
         scaled_numeric = self.scaler.fit_transform(numeric_features)
         
@@ -156,10 +156,10 @@ class AITAPreprocessor:
         """
         clean_df = self.clean_text(df)
         
-        # 1. Main Text Representation
+        # Main Text Representation
         text_features = self._extract_text_representation(clean_df['clean_body'], is_train=False)
         
-        # 2. Body Sentiment & Stylometrics
+        # Body Sentiment & Stylometrics
         sentiment_df = self.extract_sentiment(clean_df['clean_body'])
         stylometrics_df = self.extract_stylometrics(clean_df['clean_body'])
         

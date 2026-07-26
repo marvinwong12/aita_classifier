@@ -26,7 +26,7 @@ class AITAMetadataPreprocessor:
     def __init__(self, max_features: int = 3000):
         self.max_features = max_features
         
-        # 1. Text Vectorizer (TF-IDF on Title + Body)
+        # 1Text Vectorizer (TF-IDF on Title + Body)
         self.vectorizer = TfidfVectorizer(
             max_features=self.max_features,
             ngram_range=(1, 2),
@@ -34,7 +34,7 @@ class AITAMetadataPreprocessor:
             sublinear_tf=True
         )
         
-        # 2. Sentiment Analyzer & Feature Scaler
+        # 2Sentiment Analyzer & Feature Scaler
         self.sia = SentimentIntensityAnalyzer()
         self.scaler = RobustScaler()
         
@@ -77,7 +77,7 @@ class AITAMetadataPreprocessor:
         """
         meta_df = pd.DataFrame(index=df.index)
 
-        # 1. Post Engagement Metrics (Log Transformed to handle high skew)
+        # 1Post Engagement Metrics (Log Transformed to handle high skew)
         score = df['score'].fillna(0).astype(float) if 'score' in df.columns else pd.Series(0.0, index=df.index)
         num_comments = df['num_comments'].fillna(0).astype(float) if 'num_comments' in df.columns else pd.Series(0.0, index=df.index)
         
@@ -87,7 +87,7 @@ class AITAMetadataPreprocessor:
         # Comment-to-Upvote Ratio (High ratio = controversial/debated post)
         meta_df['comment_to_score_ratio'] = num_comments / (np.maximum(0, score) + 10.0)
 
-        # 2. Edit Status (Binary indicator)
+        # Edit Status (Binary indicator)
         if 'edited' in df.columns:
             meta_df['is_edited'] = df['edited'].apply(
                 lambda x: 0 if pd.isna(x) or str(x).lower() in ['false', '0'] else 1
@@ -95,7 +95,7 @@ class AITAMetadataPreprocessor:
         else:
             meta_df['is_edited'] = 0
 
-        # 3. Temporal Signals (Parsed from Timestamp)
+        # Temporal Signals (Parsed from Timestamp)
         if 'timestamp' in df.columns:
             # Flexible datetime parsing (handles Unix timestamps or ISO string dates)
             dt_series = pd.to_datetime(df['timestamp'], unit='s', errors='coerce')
@@ -109,13 +109,13 @@ class AITAMetadataPreprocessor:
             meta_df['day_of_week'] = 0
             meta_df['is_weekend'] = 0
 
-        # 4. Text Length Metrics
+        # Text Length Metrics
         meta_df['title_char_len'] = df['title'].apply(len)
         meta_df['title_word_count'] = df['title'].apply(lambda x: len(x.split()))
         meta_df['body_char_len'] = df['body'].apply(len)
         meta_df['body_word_count'] = df['body'].apply(lambda x: len(x.split()))
 
-        # 5. Emotional / Stylometric Signals
+        # Emotional / Stylometric Signals
         full_text = df['clean_full_text']
         meta_df['caps_ratio'] = full_text.apply(lambda x: sum(1 for c in x if c.isupper()) / (len(x) + 1))
         meta_df['exclamation_count'] = full_text.apply(lambda x: x.count('!'))
@@ -125,7 +125,7 @@ class AITAMetadataPreprocessor:
         meta_df['i_pronouns'] = full_text.apply(lambda x: len(re.findall(r'\b(i|me|my|mine|myself)\b', x, re.I)))
         meta_df['they_pronouns'] = full_text.apply(lambda x: len(re.findall(r'\b(he|him|his|she|her|they|them|their)\b', x, re.I)))
 
-        # 6. Sentiment Polarity Scores (VADER)
+        # Sentiment Polarity Scores (VADER)
         sentiments = full_text.apply(lambda x: self.sia.polarity_scores(x))
         sentiment_df = pd.DataFrame(sentiments.tolist(), index=df.index)
         sentiment_df.columns = [f"vader_{col}" for col in sentiment_df.columns]
@@ -138,16 +138,16 @@ class AITAMetadataPreprocessor:
         """
         clean_df = self.clean_data(df)
 
-        # 1. Fit TF-IDF on full text
+        # Fit TF-IDF on full text
         text_matrix = self.vectorizer.fit_transform(clean_df['clean_full_text']).toarray()
         self.num_text_features = text_matrix.shape[1]
 
-        # 2. Extract & Fit Scaler on Numerical Metadata
+        # Extract & Fit Scaler on Numerical Metadata
         metadata_df = self.extract_metadata_features(clean_df)
         scaled_metadata = self.scaler.fit_transform(metadata_df)
         self.num_dense_features = scaled_metadata.shape[1]
 
-        # 3. Stack text TF-IDF + metadata features horizontally
+        # Stack text TF-IDF + metadata features horizontally
         X = np.hstack((text_matrix, scaled_metadata))
         y = clean_df['is_asshole'].values.astype(int) if 'is_asshole' in clean_df.columns else None
 
@@ -165,14 +165,14 @@ class AITAMetadataPreprocessor:
         """
         clean_df = self.clean_data(df)
 
-        # 1. Transform text via existing vectorizer
+        # Transform text via existing vectorizer
         text_matrix = self.vectorizer.transform(clean_df['clean_full_text']).toarray()
 
-        # 2. Extract & Transform metadata via existing scaler
+        # Extract & Transform metadata via existing scaler
         metadata_df = self.extract_metadata_features(clean_df)
         scaled_metadata = self.scaler.transform(metadata_df)
 
-        # 3. Stack features
+        # Stack features
         X = np.hstack((text_matrix, scaled_metadata))
         y = clean_df['is_asshole'].values.astype(int) if 'is_asshole' in clean_df.columns else None
 

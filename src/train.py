@@ -110,6 +110,7 @@ def find_best_threshold(y_true: np.ndarray, y_probs: np.ndarray) -> float:
     return best_t
 
 
+# Argparse for hyperparameter tuning options
 def parse_args():
     parser = argparse.ArgumentParser(description="Train AITA Classification Models")
     parser.add_argument("--model", type=str, default="logreg", choices=["logreg", "svm", "rf", "xgboost"])
@@ -167,7 +168,7 @@ def main():
     clf, X_train, y_train, 
     cv=5, 
     scoring=['f1_macro', 'accuracy'], 
-    return_train_score=True,  # <--- Set this to True
+    return_train_score=True,
     n_jobs=-1
     )
 
